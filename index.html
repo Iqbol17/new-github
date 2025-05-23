@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炼油装置腐蚀评价专家系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            /* 原来的深蓝色 */
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-container {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: #3498db;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .search-container {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .menu-item {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #3498db;
+        }
+
+        .submenu {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding-left: 20px;
+            display: none;
+        }
+
+        .submenu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .submenu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .submenu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .detection-points {
+            padding-left: 20px;
+            display: none;
+        }
+
+        .detection-point {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .detection-point:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .detection-point.active {
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        /* 主内容区域样式 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #e6f7ff;
+            /* 与登录窗口背景相似的浅蓝色 */
+        }
+
+        .selected-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15x 0;
+            border-bottom: 1px solid #b3d9ff;
+            margin-bottom: 20px;
+        }
+
+        .selected-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .rule-button {
+            padding: 8px 30px;
+            /* 增加宽度 */
+            background-color: #3498db;
+            /* 登录按钮的蓝色 */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .rule-button:hover {
+            background-color: #2980b9;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .left-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .right-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .primary-button {
+            padding: 15px;
+            background-color: #2c3e50;
+            /* 原来的深蓝色 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .primary-button {
+            background-color: #1a2530;
+        }
+
+        .data-table-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .table-tabs {
+            display: flex;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .table-tab.active {
+            border-bottom: 2px solid #3498db;
+            color: #3498db;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .checkbox-cell {
+            width: 30px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .action-button {
+            padding: 8px 30px;
+            /* 增加宽度 */
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .action-button:hover {
+            background-color: #1a2530;
+        }
+
+        .device-life-button {
+            display: none;
+            /* 默认隐藏 */
+            padding: 8px 30px;
+            /* 增加宽度 */
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .device-life-button:hover {
+            background-color: #1a2530;
+        }
+
+        /* 选中行的样式 */
+        .data-table tr.selected {
+            background-color: #e0f7fa;
+        }
+
+        /* 禁用按钮样式 */
+        .action-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="logo-text">炼油装置腐蚀评价专家系统</div>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="搜索">
+        </div>
+<!-- Заголовок -->
+<!-- 标题 + 添加设备按钮 -->
+    <div class="menu-item active" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <i class="fas fa-industry"></i>
+            <span>炼油装置管理</span>
+        </div>
+        <a href="#" title="添加新设备" onclick="openDeviceInlineForm(); return false;">
+            <i class="fas fa-circle-plus" data-toggle="device" style="font-size: 18px; color: #4CAF50; margin-right: 10px;"></i>
+        </a>
+        
+        
+    </div>
+        <!-- ✅ Инлайновый ввод устройства внизу -->
+        <div id="inlineDeviceForm" style="display:none; padding: 10px 15px;">
+            <input id="inlineDeviceName" placeholder="输入设备名称并按 Enter"
+                style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"
+                onkeydown="handleDeviceEnter(event)">
+        </div>
+    <!-- 设备列表 -->
+    <div class="submenu" id="device-submenu">
+        {% for device in devices %}
+        <!-- Заголовок устройства -->
+        <div class="submenu-item" data-device-id="{{ device.id }}"
+            style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <i class="fas fa-cog"></i>
+                <span>{{ device.name }}</span>
+            </div>
+            <a href="#" title="添加检测点" onclick="togglePointInlineForm({{ device.id }}); return false;">
+                <i class="fas fa-circle-plus" data-toggle="point" style="font-size: 16px; color: #2196F3; margin-right: 10px;"></i>
+            </a>
+            
+        </div>
+    
+        <!-- Список точек -->
+        <div class="detection-points {% if device.points|length > 0 %}show-on-load{% endif %}">
+        <!-- Инлайн-поле для ввода точки -->
+        <div class="inline-point-form" id="pointFormFor{{ device.id }}" style="display: none; padding: 5px 20px;">
+            <input placeholder="输入检测点名称并回车" style="width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                onkeydown="handlePointEnter(event, {{ device.id }})">
+        </div>
+            {% for point in device.points %}
+            <div class="detection-point">
+                {{ point.name }}
+                <a href="/rules/{{ point.id }}" target="_blank">规则表</a>
+            </div>
+            {% else %}
+            <div class="detection-point" style="color: gray;">(точек нет)</div>
+            {% endfor %}
+        </div>
+    
+
+        {% endfor %}
+    </div>
+      
+    
+
+          
+        <div class="menu-item">
+            <i class="fas fa-flask"></i>
+            <span>油品检测管理</span>
+        </div>
+        <div class="submenu" id="oil-submenu">
+            <div class="submenu-item">
+                <i class="fas fa-droplet"></i>
+                <span>进初馏塔油品</span>
+            </div>
+            <div class="detection-points" id="a001-points">
+                <div class="detection-point">原油进料泵P-101A/B前</div>
+                <div class="detection-point">电脱盐罐后</div>
+            </div>
+            <div class="submenu-item">
+                <i class="fas fa-droplet"></i>
+                <span>进常压塔油品</span>
+            </div>
+            <div class="detection-points" id="a002-points">
+                <div class="detection-point">1号取样点</div>
+                <div class="detection-point">2号取样点</div>
+            </div>
+            <div class="submenu-item">
+                <i class="fas fa-droplet"></i>
+                <span>进减压塔油品</span>
+            </div>
+            <div class="detection-points" id="a003-points">
+                <div class="detection-point">1号取样点</div>
+                <div class="detection-point">2号取样点</div>
+                <div class="detection-point">3号取样点</div>
+                <div class="detection-point">4号取样点</div>
+            </div>
+        </div>
+        <div class="menu-item">
+            <i class="fas fa-chart-line"></i>
+            <span>可视化</span>
+        </div>
+        <div class="menu-item">
+            <i class="fas fa-users"></i>
+            <span>用户管理</span>
+        </div>
+        <div class="menu-item">
+            <i class="fas fa-cog"></i>
+            <span>系统设置</span>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="selected-title-container">
+            <div class="selected-title" id="selected-title">初馏塔 E-123A/B出口管线</div>
+            <div class="button-group">
+                <a href="/rules" target="_blank">
+                    <button class="rule-button">规则表</button>
+                </a>
+                  
+                <button class="rule-button">历史案例表</button>
+            </div>
+        </div>
+        <div class="button-container">
+            <div class="left-buttons">
+                <a href="/add"><button class="primary-button">Добавить</button></a>
+                <button class="primary-button">修改</button>
+                <button class="primary-button">删除</button>
+                <button class="primary-button">导出</button>
+                <button class="primary-button">打印</button>
+                <button class="primary-button">刷新</button>
+            </div>
+        </div>
+
+        <div class="data-table-container">
+            <div class="table-tabs">
+                <div class="table-tab active">原始数据表</div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell"><input type="checkbox"></th>
+                        <th>公称厚度（mm）</th>
+                        <th>MOAP允许最小壁厚（mm）</th>
+                        <th>实测厚度（mm）</th>
+                        <th>腐蚀速率（mm/a）</th>
+                        <th>最大允许腐蚀厚度（mm）</th>
+                        <th>时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    {% for m in device.measurements %}
+                    <tr data-id="{{ m.id }}">
+                        <td><input type="checkbox"></td>
+                        <td>{{ m.nominal_thickness }}</td>
+                        <td>{{ m.moap_min_thickness }}</td>
+                        <td>{{ m.actual_thickness }}</td>
+                        <td>{{ m.corrosion_rate }}</td>
+                        <td>{{ m.max_corrosion_allowance }}</td>
+                        <td>{{ m.timestamp.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>            
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-button" id="evaluate-button">评价</button>
+            <button class="action-button" id="visualize-button">可视化</button>
+            <button class="device-life-button" id="device-life-button">设备使用寿命</button>
+        </div>
+    </div>
+<!-- Модальное окно для графиков -->
+<div id="visualizationModal"
+    style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:white; border:2px solid #3498db; border-radius:10px; z-index:9999; overflow:auto; padding:20px;">
+    <h3>📊 Визуализация данных</h3>
+    <label>Начальная дата:</label>
+    <input type="date" id="startDate">
+    <label style="margin-left:10px;">Конечная дата:</label>
+    <input type="date" id="endDate">
+    <button onclick="loadVisualization()" style="margin-left: 10px;">Обновить</button>
+
+    <div id="chart-thickness" style="width:100%; height:40%; margin-bottom: 30px;"></div>
+    <div id="chart-corrosion" style="width:100%; height:40%;"></div>
+    <button onclick="document.getElementById('visualizationModal').style.display='none'"
+        style="margin-top:10px;">Закрыть</button>
+</div>
+
+<!-- Добавим модальное окно -->
+<div id="pointModal"
+    style="display: none; position: fixed; top: 20%; left: 35%; width: 30%; background: white; border: 2px solid #2196F3; border-radius: 10px; z-index: 9999; padding: 20px;">
+    <h3>➕ 添加检测点</h3>
+    <form id="pointForm">
+        <input name="name" placeholder="检测点名称" required style="width: 100%;"><br><br>
+        <input type="hidden" name="device_id" id="pointDeviceId">
+        <button type="submit">保存</button>
+        <button type="button" onclick="closePointModal()">取消</button>
+    </form>
+</div>
+
+<div id="toast"
+    style="display:none; position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:10px 20px; border-radius:5px; z-index:9999;">
+</div>
+
+    <script>
+        // 切换表格标签
+        document.querySelectorAll('.table-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.table-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                const tabText = this.textContent;
+                const dataTableContainer = document.querySelector('.data-table-container');
+                if (tabText === '硫含量与酸值数据') {
+                    dataTableContainer.innerHTML = `
+                        <div class="table-tabs">
+                            <div class="table-tab active">硫含量与酸值数据</div>
+                            <div class="table-tab">盐含量数据</div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>时间</th>
+                                    <th>硫含量（%）</th>
+                                    <th>酸值（mgKOH/g）</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>2025-02-17 10:00:00</td>
+                                    <td>0.89</td>
+                                    <td>0.33</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>2025-02-24 10:00:00</td>
+                                    <td>0.64</td>
+                                    <td>0.42</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>2025-03-03 10:00:00</td>
+                                    <td>0.86</td>
+                                    <td>0.31</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>2025-03-10 10:00:00</td>
+                                    <td>0.76</td>
+                                    <td>0.30</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>2025-03-17 10:00:00</td>
+                                    <td>0.61</td>
+                                    <td>0.24</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>2025-03-24 10:00:00</td>
+                                    <td>0.70</td>
+                                    <td>0.34</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>2025-03-31 10:00:00</td>
+                                    <td>0.40</td>
+                                    <td>0.18</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                } else if (tabText === '盐含量数据') {
+                    dataTableContainer.innerHTML = `
+                        <div class="table-tabs">
+                            <div class="table-tab">硫含量与酸值数据</div>
+                            <div class="table-tab active">盐含量数据</div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>时间</th>
+                                    <th>盐含量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>2025-02-17 10:00:00</td>
+                                    <td>0.1</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>2025-02-24 10:00:00</td>
+                                    <td>0.12</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>2025-03-03 10:00:00</td>
+                                    <td>0.09</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>2025-03-10 10:00:00</td>
+                                    <td>0.11</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>2025-03-17 10:00:00</td>
+                                    <td>0.08</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>2025-03-24 10:00:00</td>
+                                    <td>0.13</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>2025-03-31 10:00:00</td>
+                                    <td>0.07</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                }
+                addRowSelectionFunctionality(dataTableContainer);
+            });
+        });
+
+        // 菜单项点击事件
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.menu-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // 如果点击的是"炼油装置管理"或"油品检测管理"，显示子菜单
+                const menuItemText = this.querySelector('span').textContent;
+                if (menuItemText === '炼油装置管理') {
+                    const submenu = document.getElementById('device-submenu');
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+
+                    // 显示设备使用寿命按钮
+                    document.getElementById('device-life-button').style.display = 'block';
+                } else if (menuItemText === '油品检测管理') {
+                    const submenu = document.getElementById('oil-submenu');
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+
+                    // 隐藏设备使用寿命按钮
+                    document.getElementById('device-life-button').style.display = 'none';
+
+                    // 更新数据表格标题和内容
+                    const dataTableContainer = document.querySelector('.data-table-container');
+                    dataTableContainer.innerHTML = `
+                        <div class="table-tabs">
+                            <div class="table-tab active">硫含量与酸值数据</div>
+                            <div class="table-tab">盐含量数据</div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>时间</th>
+                                    <th>硫含量（%）</th>
+                                    <th>酸值（mgKOH/g）</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>2025-02-17 10:00:00</td>
+                                    <td>0.89</td>
+                                    <td>0.33</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>2025-02-24 10:00:00</td>
+                                    <td>0.64</td>
+                                    <td>0.42</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>2025-03-03 10:00:00</td>
+                                    <td>0.86</td>
+                                    <td>0.31</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>2025-03-10 10:00:00</td>
+                                    <td>0.76</td>
+                                    <td>0.30</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>2025-03-17 10:00:00</td>
+                                    <td>0.61</td>
+                                    <td>0.24</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td>2025-03-24 10:00:00</td>
+                                    <td>0.70</td>
+                                    <td>0.34</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td>2025-03-31 10:00:00</td>
+                                    <td>0.40</td>
+                                    <td>0.18</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                    addRowSelectionFunctionality(dataTableContainer);
+                }
+            });
+        });
+
+        // 检测点显示/隐藏
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            item.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const parentMenuText = this.closest('.submenu').previousElementSibling.querySelector('span').textContent;
+                let pointsId;
+
+                if (parentMenuText === '炼油装置管理') {
+                    const deviceName = this.querySelector('span').textContent;
+                    switch (deviceName) {
+                        case '初馏塔':
+                            pointsId = 'e001-points';
+                            break;
+                        case '常压塔':
+                            pointsId = 'e002-points';
+                            break;
+                        case '减压塔':
+                            pointsId = 'e003-points';
+                            break;
+                        default:
+                            return;
+                    }
+                } else if (parentMenuText === '油品检测管理') {
+                    const oilName = this.querySelector('span').textContent;
+                    switch (oilName) {
+                        case '进初馏塔油品':
+                            pointsId = 'a001-points';
+                            break;
+                        case '进常压塔油品':
+                            pointsId = 'a002-points';
+                            break;
+                        case '进减压塔油品':
+                            pointsId = 'a003-points';
+                            break;
+                        default:
+                            return;
+                    }
+                }
+
+                const points = document.getElementById(pointsId);
+                points.style.display = points.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+
+        // 检测点点击事件
+        document.querySelectorAll('.detection-point').forEach(point => {
+            point.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const parentElement = this.closest('.submenu');
+                const parentMenuText = parentElement.previousElementSibling.querySelector('span').textContent;
+                let titlePrefix;
+
+                if (parentMenuText === '炼油装置管理') {
+                    const deviceName = this.closest('.detection-points').previousElementSibling.querySelector('span').textContent;
+                    titlePrefix = deviceName;
+                } else if (parentMenuText === '油品检测管理') {
+                    const oilName = this.closest('.detection-points').previousElementSibling.querySelector('span').textContent;
+                    titlePrefix = oilName;
+                }
+
+                // 移除所有检测点的active类
+                document.querySelectorAll('.detection-point').forEach(p => {
+                    p.classList.remove('active');
+                });
+                // 为当前点击的检测点添加active类
+                this.classList.add('active');
+
+                const pointName = this.textContent;
+                document.getElementById('selected-title').textContent = `${titlePrefix} ${pointName}`;
+            });
+        });
+
+        // 点击主内容区域时不隐藏子菜单
+        document.querySelector('.main-content').addEventListener('click', function (event) {
+            // 不执行任何操作，防止隐藏子菜单
+        });
+
+        // 全选/取消全选
+        document.querySelector('thead input[type="checkbox"]').addEventListener('change', function () {
+            const checked = this.checked;
+            document.querySelectorAll('tbody input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        });
+
+        // 添加行选择功能
+        function addRowSelectionFunctionality(container) {
+            const table = container.querySelector('.data-table');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                let lastSelectedRow = null;
+
+                rows.forEach(row => {
+                    row.addEventListener('click', function (event) {
+                        if (event.ctrlKey) {
+                            // Ctrl 键按下，切换当前行的选中状态
+                            this.classList.toggle('selected');
+                        } else if (event.shiftKey && lastSelectedRow) {
+                            // Shift 键按下，选择连续的行
+                            const startIndex = Array.from(rows).indexOf(lastSelectedRow);
+                            const endIndex = Array.from(rows).indexOf(this);
+                            const minIndex = Math.min(startIndex, endIndex);
+                            const maxIndex = Math.max(startIndex, endIndex);
+                            for (let i = minIndex; i <= maxIndex; i++) {
+                                rows[i].classList.add('selected');
+                            }
+                        } else {
+                            // 无修饰键，只选择当前行
+                            rows.forEach(r => r.classList.remove('selected'));
+                            this.classList.add('selected');
+                        }
+                        lastSelectedRow = this;
+                        updateButtonState(rows);
+                    });
+                });
+            }
+        }
+
+        // 更新按钮状态
+        function updateButtonState(rows) {
+            const selectedRows = Array.from(rows).filter(row => row.classList.contains('selected'));
+            const evaluateButton = document.getElementById('evaluate-button');
+            const visualizeButton = document.getElementById('visualize-button');
+
+            if (selectedRows.length === 1) {
+                evaluateButton.disabled = false;
+                visualizeButton.disabled = true;
+            } else if (selectedRows.length > 1) {
+                evaluateButton.disabled = true;
+                visualizeButton.disabled = false;
+            } else {
+                evaluateButton.disabled = true;
+                visualizeButton.disabled = true;
+            }
+        }
+
+        // 初始添加行选择功能
+        const dataTableContainer = document.querySelector('.data-table-container');
+        addRowSelectionFunctionality(dataTableContainer);
+
+        // 初始禁用按钮
+        const evaluateButton = document.getElementById('evaluate-button');
+        const visualizeButton = document.getElementById('visualize-button');
+        evaluateButton.disabled = true;
+        visualizeButton.disabled = true;
+
+        // === Обработка кнопки "Оценить"
+            document.getElementById('evaluate-button').addEventListener('click', function () {
+                const selectedRow = document.querySelector('.data-table tr.selected');
+                if (!selectedRow) {
+                    alert("Сначала выберите строку.");
+                    return;
+                }
+                const id = selectedRow.getAttribute('data-id');
+                fetch(`/evaluate/${id}`)
+                    .then(res => res.text())
+                    .then(result => {
+                        alert(result);
+                    })
+                    .catch(err => {
+                        alert("Ошибка при получении данных.");
+                        console.error(err);
+                    });
+            });
+
+            <!-- обработку visualize - button -->
+            document.getElementById('visualize-button').addEventListener('click', function () {
+                    document.getElementById('visualizationModal').style.display = 'block';
+                    loadVisualization(); // загружаем график при открытии
+                });
+
+                function loadVisualization() {
+                    const selectedRows = document.querySelectorAll('.data-table tr.selected');
+                    const ids = Array.from(selectedRows).map(row => row.getAttribute('data-id'));
+
+                    if (ids.length < 1) {
+                        alert("Выберите минимум одну строку.");
+                        return;
+                    }
+
+                    const start = document.getElementById('startDate').value;
+                    const end = document.getElementById('endDate').value;
+
+                    fetch('/visualize-data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: ids, start_date: start, end_date: end })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            const chart1 = echarts.init(document.getElementById('chart-thickness'));
+                            chart1.setOption({
+                                title: { text: 'Изменение толщины' },
+                                tooltip: { trigger: 'axis' },
+                                xAxis: { type: 'category', data: data.timestamps },
+                                yAxis: { type: 'value', name: 'Толщина (мм)' },
+                                series: [{ name: 'Толщина', type: 'line', data: data.thickness }]
+                            });
+
+                            const chart2 = echarts.init(document.getElementById('chart-corrosion'));
+                            chart2.setOption({
+                                title: { text: 'Скорость коррозии' },
+                                tooltip: { trigger: 'axis' },
+                                xAxis: { type: 'category', data: data.timestamps },
+                                yAxis: { type: 'value', name: 'Скорость (мм/год)' },
+                                series: [{ name: 'Коррозия', type: 'line', data: data.corrosion }]
+                            });
+                        })
+                        .catch(err => {
+                            alert("Ошибка при получении данных.");
+                            console.error(err);
+                        });
+                }
+
+    // Разворачиваем detection-points с классом show-on-load
+    document.querySelectorAll('.detection-points.show-on-load').forEach(p => {
+        p.style.display = 'block';
+    });
+
+    // JS - логика открытия / закрытия
+    function openDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'block';
+        }
+        function closeDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+        function openPointModal(deviceId) {
+                document.getElementById('pointDeviceId').value = deviceId;
+                document.getElementById('pointModal').style.display = 'block';
+            }
+
+            function closePointModal() {
+                document.getElementById('pointModal').style.display = 'none';
+            }
+
+                document.getElementById('pointForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    fetch('/add-point-ajax', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                closePointModal();
+                                const pointName = document.querySelector('#pointForm input[name="name"]').value;
+                                const deviceId = document.getElementById('pointDeviceId').value;
+
+                                // Вставить в DOM
+                                const container = document.querySelector(`.submenu-item[data-device-id="${deviceId}"] + .detection-points`);
+                                const newPoint = document.createElement('div');
+                                newPoint.className = 'detection-point';
+                                newPoint.innerHTML = `${pointName} <a href="#">规则表</a>`;
+                                container.appendChild(newPoint);
+
+                                document.getElementById('pointForm').reset();
+                                showToast("✅ 检测点 добавлен!");
+                            } else {
+                                showToast("❌ Ошибка добавления.");
+                            }
+                        });
+                });
+            
+            function showToast(msg) {
+                    const toast = document.getElementById('toast');
+                    toast.textContent = msg;
+                    toast.style.display = 'block';
+                    setTimeout(() => {
+                        toast.style.display = 'none';
+                    }, 2000);
+                }
+            
+    //JS отправка формы через fetch()
+        document.getElementById('deviceForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch('/add-device-ajax', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("✅ Устройство добавлено!");
+                            location.reload();  // можно заменить на динамическое обновление
+                        } else {
+                            alert("❌ Ошибка добавления.");
+                        }
+                    });
+            });
+
+                function openDeviceInlineForm() {
+                    document.getElementById('inlineDeviceForm').style.display = 'block';
+                }
+                
+                function submitInlineDevice() {
+                    const name = document.getElementById('inlineDeviceName').value.trim();
+                    const type = document.getElementById('inlineDeviceType').value.trim();
+                    if (!name || !type) {
+                        showToast("⚠️ 请填写名称和类型！");
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('type', type);
+
+                    fetch('/add-device-ajax', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast("✅ 设备添加成功！");
+                                location.reload();
+                            } else {
+                                showToast("❌ 添加失败！");
+                            }
+                        });
+                }
+            
+                function openDeviceInlineForm() {
+                        const input = document.getElementById('inlineDeviceForm');
+                        input.style.display = 'block';
+                        document.getElementById('inlineDeviceName').focus();
+                    }
+
+                    function handleDeviceEnter(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();  // 🚫 остановить стандартную отправку формы
+                            submitInlineDevice();
+                        }
+                    }
+
+                    function submitInlineDevice() {
+                        const name = document.getElementById('inlineDeviceName').value.trim();
+                        if (!name) return;
+
+                        const formData = new FormData();
+                        formData.append('name', name);
+
+                        fetch('/add-device-ajax', {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showToast("✅ 设备添加成功！");
+                                    location.reload();  // можно заменить на вставку DOM
+                                } else {
+                                    showToast("❌ 添加失败！");
+                                }
+                            });
+                    }
+                
+            
+
+
+                    function togglePointInlineForm(deviceId) {
+                            const form = document.getElementById('pointFormFor' + deviceId);
+                            const visible = form.style.display === 'block';
+                            form.style.display = visible ? 'none' : 'block';
+                            if (!visible) {
+                                form.querySelector('input').focus();
+                            }
+                        }
+
+                        function handlePointEnter(event, deviceId) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                submitInlinePoint(deviceId);
+                            }
+                        }
+
+                        function submitInlinePoint(deviceId) {
+                            const form = document.getElementById('pointFormFor' + deviceId);
+                            const input = form.querySelector('input');
+                            const name = input.value.trim();
+                            if (!name) return;
+
+                            const formData = new FormData();
+                            formData.append('name', name);
+                            formData.append('device_id', deviceId);
+
+                            fetch('/add-point-ajax', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        showToast("✅ 检测点添加成功！");
+                                        input.value = '';
+                                        form.style.display = 'none';
+
+                                        // 🔧 Добавляем точку в DOM
+                                        const container = document.querySelector(`.submenu-item[data-device-id="${deviceId}"] + .detection-points`);
+                                        const newPoint = document.createElement('div');
+                                        newPoint.className = 'detection-point';
+                                        newPoint.innerHTML = `${name} <a href="/rules/${data.point_id}" target="_blank">规则表</a>`;
+                                        container.appendChild(newPoint);
+                                    } else {
+                                        showToast("❌ 添加失败！");
+                                    }
+                                });
+                        }
+                    
+                        
+                            document.addEventListener('click', function (event) {
+                                    console.log("Клик по элементу:", event.target);
+
+                                    const target = event.target;
+
+                                    const inlineDeviceForm = document.getElementById('inlineDeviceForm');
+                                    const isClickInsideDevice = inlineDeviceForm.contains(target);
+                                    const isClickDeviceToggle = target.closest('[data-toggle="device"]');
+
+                                    console.log("→ isClickInsideDevice:", isClickInsideDevice);
+                                    console.log("→ isClickDeviceToggle:", isClickDeviceToggle);
+
+                                    if (!isClickInsideDevice && !isClickDeviceToggle && inlineDeviceForm.style.display === 'block') {
+                                        console.log("✅ Скрываем inlineDeviceForm");
+                                        inlineDeviceForm.style.display = 'none';
+                                    }
+
+                                    document.querySelectorAll('.inline-point-form').forEach(form => {
+                                        const isClickInsidePoint = form.contains(target);
+                                        const isClickPointToggle = target.closest('[data-toggle="point"]');
+
+                                        console.log("→ isClickInsidePoint:", isClickInsidePoint);
+                                        console.log("→ isClickPointToggle:", isClickPointToggle);
+
+                                        if (!isClickInsidePoint && !isClickPointToggle && form.style.display === 'block') {
+                                            console.log("✅ Скрываем point form:", form.id);
+                                            form.style.display = 'none';
+                                        }
+                                    });
+                                });
+                            
+
+
+    </script>
+    
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+
+</body>
+
+</html>
