@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炼油装置腐蚀评价专家系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+
+<body>
+    <!-- Наш Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="logo-text">炼油装置腐蚀评价专家系统</div>
+        </div>
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="搜索">
+            </div>
+
+        <div class="menu-item active" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <i class="fas fa-industry"></i>
+                <span>炼油装置管理</span>
+            </div>
+            <a href="#" title="添加新设备" onclick="openDeviceInlineForm(); return false;">
+                <i class="fas fa-circle-plus" data-toggle="device" style="font-size: 18px; color: #4CAF50; margin-right: 10px;"></i>
+            </a>
+         </div>
+
+
+        <!-- Инлайновый ввод устройства -->
+        <div id="inlineDeviceForm" style="display:none; padding: 10px 15px;">
+            <input id="inlineDeviceName" placeholder="输入设备名称"
+                style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"
+                onkeydown="handleDeviceEnter(event)">
+        </div>
+        <!-- 设备列表 -->
+        <div id="device-submenu" class="submenu" id="device-submenu">
+            {% for device in devices %}
+            <div class="submenu-item" data-device-id="{{ device.id }}"
+                style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center;">
+                    <i class="fas fa-cog"></i>
+                    <span class="device-name" data-id="{{ device.id }}" style="margin-left: 8px;">{{ device.name }}</span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <a href="#" title="添加检测点" onclick="togglePointInlineForm({{ device.id }}); return false;"
+                        style="margin-right: 1px;">
+                        <i class="fas fa-circle-plus" data-toggle="point" style="font-size: 16px; color: #2196F3;"></i>
+                    </a>
+                    <a href="#" title="重命名设备" onclick="editDeviceName({{ device.id }}); return false;"
+                        style="margin-right: 1px;">
+                        <i class="fas fa-pen" style="font-size: 14px; color: #ffc107;"></i>
+                    </a>
+                    <a href="#" title="删除设备" onclick="deleteDevice({{ device.id }}); return false;">
+                        <i class="fas fa-trash" style="font-size: 16px; color: #f44336;"></i>
+                    </a>
+                </div>
+            </div>
+    
+            <!-- Список точек -->
+            <div class="detection-points show-on-load">
+                <!-- Форма добавления -->
+                <div class="inline-point-form" id="pointFormFor{{ device.id }}" style="display: none; padding: 5px 20px;">
+                    <input placeholder="输入检测点名称"
+                        style="width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                        onkeydown="handlePointEnter(event, {{ device.id }})">
+                </div>
+        
+                {% if device.points %}
+                {% for point in device.points %}
+                <div class="detection-point" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="point-name" data-id="{{ point.id }}" data-type="device_point">{{ point.name }}</span>
+                    <div style="display: flex; gap: 6px;">
+                        <i class="fas fa-pen" onclick="editPointName({{ point.id }})"
+                            style="font-size: 12px; color: #ffc107; cursor: pointer;margin-right: 4px;"></i>
+                        <a href="#" title="删除监测点" onclick="deletePoint({{ point.id }}); return false;">
+                            <i class="fas fa-trash" style="font-size: 14px; color: #f44336;"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="detection-point" style="color: gray;">(无检测点)</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+         </div>
+
+
+        <div class="menu-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <i class="fas fa-flask"></i>
+                    <span>油品检测管理</span>
+                </div>
+                <a href="#" title="添加油品分类" onclick="toggleOilCategoryInlineForm(); return false;">
+                    <i class="fas fa-circle-plus" id="oilCategoryToggleIcon"
+                        style="font-size: 18px; color: #4CAF50; margin-right: 10px;"></i>
+                </a>
+                
+            </div>
+            <!-- 隐藏的输入框 -->
+            <div id="inlineOilCategoryForm" style="display:none; padding: 10px 15px;">
+                <input id="inlineOilCategoryName" placeholder="输入分类"
+                    style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"
+                    onkeydown="handleOilCategoryEnter(event)">
+            </div>
+            
+        <div id="oil-submenu" class="submenu" id="oil-submenu">
+            {% for cat in oil_categories %}
+                <div class="submenu-item" data-category-id="{{ cat.id }}"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-droplet"></i>
+                        <span class="category-name" data-id="{{ cat.id }}" style="margin-left: 8px;">{{ cat.name }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <a href="#" title="添加检测点" onclick="toggleOilPointInlineForm({{ cat.id }}); return false;"
+                            style="margin-right: 4px;">
+                            <i class="fas fa-circle-plus" style="font-size: 16px; color: #2196F3;"></i>
+                        </a>
+                        <a href="#" title="重命名分类" onclick="editOilCategoryName({{ cat.id }}); return false;"
+                            style="margin-right: 4px;">
+                            <i class="fas fa-pen" style="font-size: 14px; color: #ffc107;"></i>
+                        </a>
+                        <a href="#" title="删除分类" onclick="deleteOilCategory({{ cat.id }}); return false;">
+                            <i class="fas fa-trash" style="font-size: 16px; color: #f44336;"></i>
+                        </a>
+                </div>
+            </div>
+    
+            <!-- 检测点列表 -->
+            <div class="detection-points show-on-load">
+                <div class="inline-point-form" id="oilPointFormFor{{ cat.id }}" style="display: none; padding: 5px 20px;">
+                    <input placeholder="输入取样点名称"
+                        style="width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                        onkeydown="handleOilPointEnter(event, {{ cat.id }})">
+                </div>
+        
+                {% if cat.oils %}
+                {% for point in cat.oils %}
+                <div class="detection-point" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="point-name" data-id="{{ point.id }}" data-type="oil_point">{{ point.name }}</span>
+                    <i class="fas fa-pen" onclick="editOilPointName({{ point.id }})"
+                        style="font-size: 12px; color: #ffc107; cursor: pointer;"></i>                
+                        <a href="#" title="删除检测点" onclick="deleteOilPoint({{ point.id }}); return false;">
+                            <i class="fas fa-trash" style="font-size: 14px; color: #f44336;"></i>
+                        </a>
+                </div>
+                 {% endfor %}
+                 {% else %}
+                <div class="detection-point" style="color: gray;">(无取样点)</div>
+            {% endif %}
+            </div>
+             {% endfor %}
+        </div>
+
+        <div class="menu-item">
+            <i class="fas fa-users"></i>
+            <span>用户</span>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="selected-title-container">
+            <div class="selected-title" id="selected-title">初馏塔 E-123A/B出口管线</div>
+            <div class="button-group">
+                <a href="/rules" target="_blank">
+                    <button class="rule-button">规则表</button>
+                </a>
+                  
+                <button class="rule-button">历史案例表</button>
+            </div>
+        </div>
+        <div class="button-container">
+            <div class="left-buttons">
+                <button class="primary-button" onclick="openAddMeasurementModal()">添加</button>
+
+                <button class="primary-button">修改</button>
+                <button class="primary-button">删除</button>
+                <button class="primary-button">导出</button>
+                <button class="primary-button">打印</button>
+                <button class="primary-button">刷新</button>
+            </div>
+        </div>
+
+        <div class="data-table-container">
+            <div class="table-tabs">
+                <div class="table-tab active">原始数据表</div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell"><input type="checkbox"></th>
+                        <th>公称厚度（mm）</th>
+                        <th>MOAP允许最小壁厚（mm）</th>
+                        <th>实测厚度（mm）</th>
+                        <th>腐蚀速率（mm/a）</th>
+                        <th>最大允许腐蚀厚度（mm）</th>
+                        <th>时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    {% for m in device.measurements %}
+                    <tr data-id="{{ m.id }}">
+                        <td><input type="checkbox"></td>
+                        <td>{{ m.nominal_thickness }}</td>
+                        <td>{{ m.moap_min_thickness }}</td>
+                        <td>{{ m.actual_thickness }}</td>
+                        <td>{{ m.corrosion_rate }}</td>
+                        <td>{{ m.max_corrosion_allowance }}</td>
+                        <td>{{ m.timestamp.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>            
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-button" id="evaluate-button">评价</button>
+            <button class="action-button" id="visualize-button">可视化</button>
+            <button class="device-life-button" id="device-life-button">设备使用寿命</button>
+        </div>
+    </div>
+<!-- Модальное окно для графиков -->
+<div id="visualizationModal"
+    style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:white; border:2px solid #3498db; border-radius:10px; z-index:9999; overflow:auto; padding:20px;">
+    <h3>📊 Визуализация данных</h3>
+    <label>Начальная дата:</label>
+    <input type="date" id="startDate">
+    <label style="margin-left:10px;">Конечная дата:</label>
+    <input type="date" id="endDate">
+    <button onclick="loadVisualization()" style="margin-left: 10px;">Обновить</button>
+
+    <div id="chart-thickness" style="width:100%; height:40%; margin-bottom: 30px;"></div>
+    <div id="chart-corrosion" style="width:100%; height:40%;"></div>
+    <button onclick="document.getElementById('visualizationModal').style.display='none'"
+        style="margin-top:10px;">Закрыть</button>
+</div>
+
+<!-- Добавим модальное окно -->
+<div id="pointModal"
+    style="display: none; position: fixed; top: 20%; left: 35%; width: 30%; background: white; border: 2px solid #2196F3; border-radius: 10px; z-index: 9999; padding: 20px;">
+    <h3>➕ 添加检测点</h3>
+    <form id="pointForm">
+        <input name="name" placeholder="检测点名称" required style="width: 100%;"><br><br>
+        <input type="hidden" name="device_id" id="pointDeviceId">
+        <button type="submit">保存</button>
+        <button type="button" onclick="closePointModal()">取消</button>
+    </form>
+</div>
+
+<!-- 添加测量记录 -->
+<div id="addMeasurementModal"
+    style="display:none; position:fixed; top:20%; left:35%; width:30%; background:white; border:2px solid #2196F3; border-radius:10px; z-index:9999; padding:20px;">
+    <h3>➕ 添加测量记录</h3>
+    <form id="addMeasurementForm">
+        <input type="hidden" name="point_id" id="currentPointIdInput">
+        <label>公称厚度:</label><input name="nominal_thickness" type="number" step="0.01" required><br><br>
+        <label>MOAP允许最小壁厚:</label><input name="moap_min_thickness" type="number" step="0.01" required><br><br>
+        <label>实测厚度:</label><input name="actual_thickness" type="number" step="0.01" required><br><br>
+        <label>腐蚀速率:</label><input name="corrosion_rate" type="number" step="0.01" required><br><br>
+        <label>最大允许腐蚀厚度:</label><input name="max_corrosion_allowance" type="number" step="0.01" required><br><br>
+        <button type="submit">保存</button>
+        <button type="button" onclick="closeAddMeasurementModal()">取消</button>
+    </form>
+</div>
+
+<script>
+    function openAddMeasurementModal() {
+        if (!window.currentPointId) {
+            alert("⚠️ 请先选择一个监测点");
+            return;
+        }
+        document.getElementById('currentPointIdInput').value = window.currentPointId;
+        document.getElementById('addMeasurementModal').style.display = 'block';
+    }
+
+    function closeAddMeasurementModal() {
+        document.getElementById('addMeasurementModal').style.display = 'none';
+    }
+
+    document.getElementById('addMeasurementForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/add-measurement', {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closeAddMeasurementModal();
+                    alert("✅ 添加成功！");
+                    const pointId = window.currentPointId;
+                    fetch(`/api/data/device_point/${pointId}`)
+                        .then(res => res.json())
+                        .then(data => renderDataTable(data));
+                } else {
+                    alert("❌ 添加失败：" + data.message);
+                }
+            });
+    });
+</script>
+
+
+<div id="toast"
+    style="display:none; position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:10px 20px; border-radius:5px; z-index:9999;">
+</div>
+
+<!-- 添加测量记录 -->
+
+
+<script>
+
+    // 切换表格标签
+        document.querySelectorAll('.table-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.table-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                const tabText = this.textContent;
+                const dataTableContainer = document.querySelector('.data-table-container');
+                if (tabText === '硫含量与酸值数据') {
+                    dataTableContainer.innerHTML = `
+                <div class="table-tabs">
+                    <div class="table-tab active">硫含量与酸值数据</div>
+                    <div class="table-tab">盐含量数据</div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>时间</th>
+                            <th>硫含量（%）</th>
+                            <th>酸值（mgKOH/g）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>2025-02-17 10:00:00</td>
+                            <td>0.89</td>
+                            <td>0.33</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2025-02-24 10:00:00</td>
+                            <td>0.64</td>
+                            <td>0.42</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>2025-03-03 10:00:00</td>
+                            <td>0.86</td>
+                            <td>0.31</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>2025-03-10 10:00:00</td>
+                            <td>0.76</td>
+                            <td>0.30</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>2025-03-17 10:00:00</td>
+                            <td>0.61</td>
+                            <td>0.24</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>2025-03-24 10:00:00</td>
+                            <td>0.70</td>
+                            <td>0.34</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>2025-03-31 10:00:00</td>
+                            <td>0.40</td>
+                            <td>0.18</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+                } else if (tabText === '盐含量数据') {
+                    dataTableContainer.innerHTML = `
+                <div class="table-tabs">
+                    <div class="table-tab">硫含量与酸值数据</div>
+                    <div class="table-tab active">盐含量数据</div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>时间</th>
+                            <th>盐含量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>2025-02-17 10:00:00</td>
+                            <td>0.1</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2025-02-24 10:00:00</td>
+                            <td>0.12</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>2025-03-03 10:00:00</td>
+                            <td>0.09</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>2025-03-10 10:00:00</td>
+                            <td>0.11</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>2025-03-17 10:00:00</td>
+                            <td>0.08</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>2025-03-24 10:00:00</td>
+                            <td>0.13</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>2025-03-31 10:00:00</td>
+                            <td>0.07</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+                }
+                addRowSelectionFunctionality(dataTableContainer);
+            });
+        });
+
+        // 菜单项点击事件
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.menu-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // 如果点击的是"炼油装置管理"或"油品检测管理"，显示子菜单
+                const menuItemText = this.querySelector('span').textContent;
+                if (menuItemText === '炼油装置管理') {
+                    const submenu = document.getElementById('device-submenu');
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+
+                    // 显示设备使用寿命按钮
+                    document.getElementById('device-life-button').style.display = 'block';
+                } else if (menuItemText === '油品检测管理') {
+                    const submenu = document.getElementById('oil-submenu');
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+
+                    // 隐藏设备使用寿命按钮
+                    document.getElementById('device-life-button').style.display = 'none';
+
+                    // 更新数据表格标题和内容
+                    const dataTableContainer = document.querySelector('.data-table-container');
+                    dataTableContainer.innerHTML = `
+                <div class="table-tabs">
+                    <div class="table-tab active">硫含量与酸值数据</div>
+                    <div class="table-tab">盐含量数据</div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>时间</th>
+                            <th>硫含量（%）</th>
+                            <th>酸值（mgKOH/g）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>2025-02-17 10:00:00</td>
+                            <td>0.89</td>
+                            <td>0.33</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2025-02-24 10:00:00</td>
+                            <td>0.64</td>
+                            <td>0.42</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>2025-03-03 10:00:00</td>
+                            <td>0.86</td>
+                            <td>0.31</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>2025-03-10 10:00:00</td>
+                            <td>0.76</td>
+                            <td>0.30</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>2025-03-17 10:00:00</td>
+                            <td>0.61</td>
+                            <td>0.24</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>2025-03-24 10:00:00</td>
+                            <td>0.70</td>
+                            <td>0.34</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>2025-03-31 10:00:00</td>
+                            <td>0.40</td>
+                            <td>0.18</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+                    addRowSelectionFunctionality(dataTableContainer);
+                }
+            });
+        });
+
+        // 检测点显示/隐藏
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            item.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const parentMenuText = this.closest('.submenu').previousElementSibling.querySelector('span').textContent;
+                let pointsId;
+
+                if (parentMenuText === '炼油装置管理') {
+                    const deviceName = this.querySelector('span').textContent;
+                    switch (deviceName) {
+                        case '初馏塔':
+                            pointsId = 'e001-points';
+                            break;
+                        case '常压塔':
+                            pointsId = 'e002-points';
+                            break;
+                        case '减压塔':
+                            pointsId = 'e003-points';
+                            break;
+                        default:
+                            return;
+                    }
+                } else if (parentMenuText === '油品检测管理') {
+                    const oilName = this.querySelector('span').textContent;
+                    switch (oilName) {
+                        case '进初馏塔油品':
+                            pointsId = 'a001-points';
+                            break;
+                        case '进常压塔油品':
+                            pointsId = 'a002-points';
+                            break;
+                        case '进减压塔油品':
+                            pointsId = 'a003-points';
+                            break;
+                        default:
+                            return;
+                    }
+                }
+
+                const points = document.getElementById(pointsId);
+                points.style.display = points.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+
+        // 检测点点击事件
+        document.querySelectorAll('.detection-point').forEach(point => {
+            point.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const parentElement = this.closest('.submenu');
+                const parentMenuText = parentElement.previousElementSibling.querySelector('span').textContent;
+                let titlePrefix;
+
+                if (parentMenuText === '炼油装置管理') {
+                    const deviceName = this.closest('.detection-points').previousElementSibling.querySelector('span').textContent;
+                    titlePrefix = deviceName;
+                } else if (parentMenuText === '油品检测管理') {
+                    const oilName = this.closest('.detection-points').previousElementSibling.querySelector('span').textContent;
+                    titlePrefix = oilName;
+                }
+
+                // 移除所有检测点的active类
+                document.querySelectorAll('.detection-point').forEach(p => {
+                    p.classList.remove('active');
+                });
+                // 为当前点击的检测点添加active类
+                this.classList.add('active');
+
+                const pointName = this.textContent;
+                document.getElementById('selected-title').textContent = `${titlePrefix} ${pointName}`;
+            });
+        });
+
+        // 点击主内容区域时不隐藏子菜单
+        document.querySelector('.main-content').addEventListener('click', function (event) {
+            // 不执行任何操作，防止隐藏子菜单
+        });
+
+        // 全选/取消全选
+        document.querySelector('thead input[type="checkbox"]').addEventListener('change', function () {
+            const checked = this.checked;
+            document.querySelectorAll('tbody input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        });
+
+        // 添加行选择功能
+        function addRowSelectionFunctionality(container) {
+            const table = container.querySelector('.data-table');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                let lastSelectedRow = null;
+
+                rows.forEach(row => {
+                    row.addEventListener('click', function (event) {
+                        if (event.ctrlKey) {
+                            // Ctrl 键按下，切换当前行的选中状态
+                            this.classList.toggle('selected');
+                        } else if (event.shiftKey && lastSelectedRow) {
+                            // Shift 键按下，选择连续的行
+                            const startIndex = Array.from(rows).indexOf(lastSelectedRow);
+                            const endIndex = Array.from(rows).indexOf(this);
+                            const minIndex = Math.min(startIndex, endIndex);
+                            const maxIndex = Math.max(startIndex, endIndex);
+                            for (let i = minIndex; i <= maxIndex; i++) {
+                                rows[i].classList.add('selected');
+                            }
+                        } else {
+                            // 无修饰键，只选择当前行
+                            rows.forEach(r => r.classList.remove('selected'));
+                            this.classList.add('selected');
+                        }
+                        lastSelectedRow = this;
+                        updateButtonState(rows);
+                    });
+                });
+            }
+        }
+
+        // 更新按钮状态
+        function updateButtonState(rows) {
+            const selectedRows = Array.from(rows).filter(row => row.classList.contains('selected'));
+            const evaluateButton = document.getElementById('evaluate-button');
+            const visualizeButton = document.getElementById('visualize-button');
+
+            if (selectedRows.length === 1) {
+                evaluateButton.disabled = false;
+                visualizeButton.disabled = true;
+            } else if (selectedRows.length > 1) {
+                evaluateButton.disabled = true;
+                visualizeButton.disabled = false;
+            } else {
+                evaluateButton.disabled = true;
+                visualizeButton.disabled = true;
+            }
+        }
+
+        // 初始添加行选择功能
+        const dataTableContainer = document.querySelector('.data-table-container');
+        addRowSelectionFunctionality(dataTableContainer);
+
+        // 初始禁用按钮
+        const evaluateButton = document.getElementById('evaluate-button');
+        const visualizeButton = document.getElementById('visualize-button');
+        evaluateButton.disabled = true;
+        visualizeButton.disabled = true;
+
+        // === Обработка кнопки "Оценить"
+        document.getElementById('evaluate-button').addEventListener('click', function () {
+            const selectedRow = document.querySelector('.data-table tr.selected');
+            if (!selectedRow) {
+                alert("Сначала выберите строку.");
+                return;
+            }
+            const id = selectedRow.getAttribute('data-id');
+            fetch(`/evaluate/${id}`)
+                .then(res => res.text())
+                .then(result => {
+                    alert(result);
+                })
+                .catch(err => {
+                    alert("Ошибка при получении данных.");
+                    console.error(err);
+                });
+        });
+
+        // обработку visualize - button 
+        document.getElementById('visualize-button').addEventListener('click', function () {
+            document.getElementById('visualizationModal').style.display = 'block';
+            loadVisualization(); // загружаем график при открытии
+        });
+
+        function loadVisualization() {
+            const selectedRows = document.querySelectorAll('.data-table tr.selected');
+            const ids = Array.from(selectedRows).map(row => row.getAttribute('data-id'));
+
+            if (ids.length < 1) {
+                alert("Выберите минимум одну строку.");
+                return;
+            }
+
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+
+            fetch('/visualize-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, start_date: start, end_date: end })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const chart1 = echarts.init(document.getElementById('chart-thickness'));
+                    chart1.setOption({
+                        title: { text: 'Изменение толщины' },
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: data.timestamps },
+                        yAxis: { type: 'value', name: 'Толщина (мм)' },
+                        series: [{ name: 'Толщина', type: 'line', data: data.thickness }]
+                    });
+
+                    const chart2 = echarts.init(document.getElementById('chart-corrosion'));
+                    chart2.setOption({
+                        title: { text: 'Скорость коррозии' },
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: data.timestamps },
+                        yAxis: { type: 'value', name: 'Скорость (мм/год)' },
+                        series: [{ name: 'Коррозия', type: 'line', data: data.corrosion }]
+                    });
+                })
+                .catch(err => {
+                    alert("Ошибка при получении данных.");
+                    console.error(err);
+                });
+        }
+
+        // Разворачиваем detection-points с классом show-on-load
+        document.querySelectorAll('.detection-points.show-on-load').forEach(p => {
+            p.style.display = 'block';
+        });
+
+        // JS - логика открытия / закрытия
+        function openDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'block';
+        }
+        function closeDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+        function openPointModal(deviceId) {
+            document.getElementById('pointDeviceId').value = deviceId;
+            document.getElementById('pointModal').style.display = 'block';
+        }
+
+        function closePointModal() {
+            document.getElementById('pointModal').style.display = 'none';
+        }
+
+        document.getElementById('pointForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/add-point-ajax', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        closePointModal();
+                        const pointName = document.querySelector('#pointForm input[name="name"]').value;
+                        const deviceId = document.getElementById('pointDeviceId').value;
+
+                        // Вставить в DOM
+                        const container = document.querySelector(`.submenu-item[data-device-id="${deviceId}"] + .detection-points`);
+                        const newPoint = document.createElement('div');
+                        newPoint.className = 'detection-point';
+                        newPoint.innerHTML = `${pointName} <a href="#">规则表</a>`;
+                        container.appendChild(newPoint);
+
+                        document.getElementById('pointForm').reset();
+                        showToast("✅ 检测点 добавлен!");
+                    } else {
+                        showToast("❌ Ошибка добавления.");
+                    }
+                });
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        //JS отправка формы через fetch()
+        document.getElementById('deviceForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/add-device-ajax', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("✅ Устройство добавлено!");
+                        location.reload();  // можно заменить на динамическое обновление
+                    } else {
+                        alert("❌ Ошибка добавления.");
+                    }
+                });
+        });
+
+        function openDeviceInlineForm() {
+            document.getElementById('inlineDeviceForm').style.display = 'block';
+        }
+
+        function submitInlineDevice() {
+            const name = document.getElementById('inlineDeviceName').value.trim();
+            const type = document.getElementById('inlineDeviceType').value.trim();
+            if (!name || !type) {
+                showToast("⚠️ 请填写名称和类型！");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('type', type);
+
+            fetch('/add-device-ajax', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 设备添加成功！");
+                        location.reload();
+                    } else {
+                        showToast("❌ 添加失败！");
+                    }
+                });
+        }
+
+        function openDeviceInlineForm() {
+            const input = document.getElementById('inlineDeviceForm');
+            const icon = document.querySelector('i[data-toggle="device"]');
+            const visible = input.style.display === 'block';
+
+            input.style.display = visible ? 'none' : 'block';
+
+            if (!visible) {
+                document.getElementById('inlineDeviceName').focus();
+            }
+
+            // Переключаем иконку
+            if (icon) {
+                icon.classList.remove('fa-circle-plus', 'fa-circle-minus');
+                icon.classList.add(visible ? 'fa-circle-plus' : 'fa-circle-minus');
+            }
+        }
+
+
+        function handleDeviceEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();  // 🚫 остановить стандартную отправку формы
+                submitInlineDevice();
+            }
+        }
+
+        function submitInlineDevice() {
+            const name = document.getElementById('inlineDeviceName').value.trim();
+            if (!name) return;
+
+            const formData = new FormData();
+            formData.append('name', name);
+
+            fetch('/add-device-ajax', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 设备添加成功！");
+                        location.reload();  // можно заменить на вставку DOM
+                    } else {
+                        showToast("❌ 添加失败！");
+                    }
+                });
+        }
+
+
+
+
+        function togglePointInlineForm(deviceId) {
+            const form = document.getElementById('pointFormFor' + deviceId);
+            const toggleIcon = document.querySelector(`.submenu-item[data-device-id="${deviceId}"] i[data-toggle="point"]`);
+            const visible = form.style.display === 'block';
+
+            // Переключение видимости формы
+            form.style.display = visible ? 'none' : 'block';
+            if (!visible) {
+                form.querySelector('input').focus();
+            }
+
+            // Переключение иконки
+            if (toggleIcon) {
+                toggleIcon.classList.remove('fa-circle-plus', 'fa-circle-minus');
+                toggleIcon.classList.add(visible ? 'fa-circle-plus' : 'fa-circle-minus');
+            }
+        }
+
+
+        function handlePointEnter(event, deviceId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitInlinePoint(deviceId);
+            }
+        }
+
+        function submitInlinePoint(deviceId) {
+            const form = document.getElementById('pointFormFor' + deviceId);
+            const input = form.querySelector('input');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('device_id', deviceId);
+
+            fetch('/add-point-ajax', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 检测点添加成功！");
+                        input.value = '';
+                        form.style.display = 'none';
+
+                        // 🔧 Добавляем точку в DOM
+                        const container = document.querySelector(`.submenu-item[data-device-id="${deviceId}"] + .detection-points`);
+                        const newPoint = document.createElement('div');
+                        newPoint.className = 'detection-point';
+                        newPoint.innerHTML = `${name} <a href="/rules/${data.point_id}" target="_blank">规则表</a>`;
+                        container.appendChild(newPoint);
+                    } else {
+                        showToast("❌ 添加失败！");
+                    }
+                });
+        }
+
+
+        document.addEventListener('click', function (event) {
+            console.log("Клик по элементу:", event.target);
+
+            const target = event.target;
+
+            const inlineDeviceForm = document.getElementById('inlineDeviceForm');
+            const isClickInsideDevice = inlineDeviceForm.contains(target);
+            const isClickDeviceToggle = target.closest('[data-toggle="device"]');
+
+            console.log("→ isClickInsideDevice:", isClickInsideDevice);
+            console.log("→ isClickDeviceToggle:", isClickDeviceToggle);
+
+            if (!isClickInsideDevice && !isClickDeviceToggle && inlineDeviceForm.style.display === 'block') {
+                console.log("✅ Скрываем inlineDeviceForm");
+                inlineDeviceForm.style.display = 'none';
+            }
+
+            document.querySelectorAll('.inline-point-form').forEach(form => {
+                const isClickInsidePoint = form.contains(target);
+                const isClickPointToggle = target.closest('[data-toggle="point"]');
+
+                console.log("→ isClickInsidePoint:", isClickInsidePoint);
+                console.log("→ isClickPointToggle:", isClickPointToggle);
+
+                if (!isClickInsidePoint && !isClickPointToggle && form.style.display === 'block') {
+                    console.log("✅ Скрываем point form:", form.id);
+                    form.style.display = 'none';
+                }
+            });
+        });
+
+        function deleteDevice(id) {
+            if (!confirm("⚠️ 删除设备将同时删除其下所有监测点。是否继续？")) return;
+
+            fetch(`/delete-device/${id}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 设备已删除！");
+                        location.reload();
+                    } else {
+                        alert("❌ 删除失败：" + data.message);
+                    }
+                });
+        }
+
+        function deletePoint(id) {
+            if (!confirm("确认删除此监测点？")) return;
+
+            fetch(`/delete-point/${id}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 检测点已删除！");
+                        location.reload();
+                    } else {
+                        alert("❌ 删除失败：" + data.message);
+                    }
+                });
+        }
+
+        function editDeviceName(id) {
+            const span = document.querySelector(`.device-name[data-id="${id}"]`);
+            const oldName = span.textContent.trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            input.style.width = '120px';
+
+            span.replaceWith(input);
+            input.focus();
+
+            input.addEventListener('blur', function () {
+                const newName = input.value.trim();
+                fetch(`/rename-device/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        const newSpan = document.createElement('span');
+                        newSpan.className = 'device-name';
+                        newSpan.dataset.id = id;
+                        newSpan.textContent = newName || oldName;
+                        input.replaceWith(newSpan);
+                    });
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            });
+        }
+
+
+        function editPointName(id) {
+            const span = document.querySelector(`.point-name[data-id="${id}"]`);
+            const oldName = span.textContent.trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            input.style.width = '120px';
+
+            span.replaceWith(input);
+            input.focus();
+
+            input.addEventListener('blur', function () {
+                const newName = input.value.trim();
+                fetch(`/rename-point/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        const newSpan = document.createElement('span');
+                        newSpan.className = 'point-name';
+                        newSpan.dataset.id = id;
+                        newSpan.textContent = newName || oldName;
+                        input.replaceWith(newSpan);
+                    });
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            });
+        }
+
+        const span = this.querySelector('.point-name');
+        const pointId = span.dataset.id;
+        const pointType = span.dataset.type;
+
+        window.currentPointId = pointId;
+        window.currentPointType = pointType;
+
+        document.getElementById('selected-title').textContent = `当前选择：${span.textContent}`;
+
+
+
+        document.querySelectorAll('.detection-point').forEach(point => {
+            point.addEventListener('click', function () {
+                document.querySelectorAll('.detection-point').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+
+                const span = this.querySelector('.point-name');
+                const pointId = span.dataset.id;
+                const pointType = span.dataset.type;
+
+                window.currentPointId = pointId;
+                window.currentPointType = pointType;
+
+                // Обновляем заголовок
+                document.getElementById('selected-title').textContent = `当前选择：${span.textContent}`;
+
+                // 👉 Запрос данных
+                fetch(`/api/data/${pointType}/${pointId}`)
+                    .then(res => res.json())
+                    .then(data => renderDataTable(data))
+                    .catch(err => {
+                        console.error('Ошибка загрузки данных:', err);
+                    });
+            });
+        });
+
+
+        function renderDataTable(data) {
+            const container = document.querySelector('.data-table-container');
+            if (data.length === 0) {
+                container.innerHTML = "<p style='padding:20px;'>暂无数据。</p>";
+                return;
+            }
+
+            const rowsHtml = data.map(row => `
+                        <tr data-id="${row.id}">
+                            <td>${row.nominal_thickness}</td>
+                            <td>${row.moap_min_thickness}</td>
+                            <td>${row.actual_thickness}</td>
+                            <td>${row.corrosion_rate}</td>
+                            <td>${row.max_corrosion_allowance}</td>
+                            <td>${row.timestamp}</td>
+                        </tr>
+                    `).join('');
+
+            container.innerHTML = `
+                        <div class="table-tabs">
+                            <div class="table-tab active">原始数据表</div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>公称厚度（mm）</th>
+                                    <th>MOAP允许最小壁厚（mm）</th>
+                                    <th>实测厚度（mm）</th>
+                                    <th>腐蚀速率（mm/a）</th>
+                                    <th>最大允许腐蚀厚度（mm）</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    `;
+        }
+
+
+
+        function openAddMeasurementModal() {
+            if (!window.currentPointId) {
+                alert("请先选择一个监测点");
+                return;
+            }
+            document.getElementById('currentPointIdInput').value = window.currentPointId;
+            document.getElementById('addMeasurementModal').style.display = 'block';
+        }
+
+        function closeMeasurementModal() {
+            document.getElementById('addMeasurementModal').style.display = 'none';
+        }
+
+
+        document.getElementById('addMeasurementForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/add-measurement', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        closeMeasurementModal();
+                        showToast("✅ 添加成功！");
+                        // 自动刷新数据表
+                        fetch(`/api/data/device_point/${window.currentPointId}`)
+                            .then(res => res.json())
+                            .then(data => renderDataTable(data));
+                    } else {
+                        alert("添加失败");
+                    }
+                });
+        });
+
+
+        document.querySelectorAll('.detection-point').forEach(point => {
+            point.addEventListener('click', function () {
+                // 1. Сброс всех .active
+                document.querySelectorAll('.detection-point').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+
+                // 2. Получить span внутри .point-name
+                const span = this.querySelector('.point-name');
+                if (!span) {
+                    console.warn("⚠️ .point-name не найден в точке");
+                    return;
+                }
+
+                const pointId = span.dataset.id;
+                const pointType = span.dataset.type;
+
+                if (!pointId || !pointType) {
+                    console.warn("⚠️ pointId или pointType отсутствуют:", span);
+                    return;
+                }
+
+                // 3. Сохранить глобально
+                window.currentPointId = pointId;
+                window.currentPointType = pointType;
+
+                // 4. Обновить заголовок
+                document.getElementById('selected-title').textContent = `当前选择：${span.textContent}`;
+
+                // 5. Вывод для отладки
+                console.log("✅ 选择点:", pointId, pointType);
+
+                // 6. Загрузить и отобразить数据
+                fetch(`/api/data/${pointType}/${pointId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("📊 接收到数据:", data);
+                        renderDataTable(data);
+                    })
+                    .catch(err => {
+                        console.error("❌ 加载数据失败:", err);
+                    });
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            const dp = e.target.closest('.detection-point');
+            if (!dp) return;
+
+            const span = dp.querySelector('.point-name');
+            if (!span) {
+                console.warn("⚠️ .point-name 不存在");
+                return;
+            }
+
+            const pointId = span.dataset.id;
+            const pointType = span.dataset.type;
+
+            if (!pointId || !pointType) {
+                console.warn("⚠️ pointId 或 pointType 缺失");
+                return;
+            }
+
+            window.currentPointId = pointId;
+            window.currentPointType = pointType;
+
+            // 高亮选中
+            document.querySelectorAll('.detection-point').forEach(p => p.classList.remove('active'));
+            dp.classList.add('active');
+
+            // 更新标题
+            const titleEl = document.getElementById('selected-title');
+            if (titleEl) titleEl.textContent = `当前选择：${span.textContent}`;
+
+            console.log("✅ 当前点:", pointId, pointType);
+
+            // 加载数据
+            fetch(`/api/data/${pointType}/${pointId}`)
+                .then(res => res.json())
+                .then(data => renderDataTable(data))
+                .catch(err => console.error("❌ 数据加载失败:", err));
+        });
+
+        function openAddMeasurementModal() {
+            console.log('window.currentPointId:', window.currentPointId);
+            if (!window.currentPointId) {
+                alert("⚠️ 请先选择一个监测点");
+                return;
+            }
+            document.getElementById('currentPointIdInput').value = window.currentPointId;
+            document.getElementById('addMeasurementModal').style.display = 'block';
+        }
+
+</script>
+<script>
+    
+        function addOilPoint(categoryId) {
+            const input = document.querySelector(`#oilPointFormFor${categoryId} input`);
+            const name = input.value.trim();
+            if (!name) return;
+
+            fetch('/oil/add-point', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category_id: categoryId, name })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert("添加失败");
+                });
+        }
+
+        function deleteOilCategory(id) {
+            if (!confirm("确定要删除该分类吗？其中所有测点也将被删除")) return;
+            fetch(`/oil/delete-category/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert("删除失败");
+                });
+        }
+
+        function deleteOilPoint(id) {
+            if (!confirm("Delete this 测点?")) return;
+            fetch(`/oil/delete-point/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert("Delete failed");
+                });
+        }
+
+        function editOilCategoryName(id) {
+            const span = document.querySelector(`.category-name[data-id='${id}']`);
+            const currentName = span.textContent.trim();
+            const newName = prompt("输入新名称", currentName);
+            if (!newName || newName === currentName) return;
+
+            fetch(`/oil/rename-category/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert("Rename failed");
+                });
+        }
+
+        function editOilPointName(id) {
+            const span = document.querySelector(`.point-name[data-id='${id}']`);
+            const currentName = span.textContent.trim();
+            const newName = prompt("输入新名称", currentName);
+            if (!newName || newName === currentName) return;
+
+            fetch(`/oil/rename-point/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert("Rename failed");
+                });
+        }
+
+        function toggleOilPointInlineForm(categoryId) {
+            const form = document.getElementById(`oilPointFormFor${categoryId}`);
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+            if (form.style.display === 'block') form.querySelector('input').focus();
+        }
+
+        function handleOilPointEnter(event, categoryId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addOilPoint(categoryId);
+            }
+        }
+
+        function openOilCategoryInlineForm() {
+            const form = document.getElementById('inlineOilCategoryForm');
+            form.style.display = 'block';
+            document.getElementById('inlineOilCategoryName').focus();
+        }
+
+        function handleOilCategoryEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const name = document.getElementById('inlineOilCategoryName').value.trim();
+                if (!name) return;
+
+                const formData = new FormData();
+                formData.append('name', name);
+
+                fetch('/add-oil-category', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast("✅ 分类添加成功！");
+                            location.reload();
+                        } else {
+                            showToast("❌ 添加失败！");
+                        }
+                    });
+            }
+        }
+
+        function toggleOilPointInlineForm(categoryId) {
+            const form = document.getElementById('oilPointFormFor' + categoryId);
+            const icon = document.querySelector(`.submenu-item[data-category-id="${categoryId}"] i.fa-circle-plus, .submenu-item[data-category-id="${categoryId}"] i.fa-circle-minus`);
+
+            const visible = form.style.display === 'block';
+            form.style.display = visible ? 'none' : 'block';
+
+            if (icon) {
+                if (visible) {
+                    icon.classList.remove('fa-circle-minus');
+                    icon.classList.add('fa-circle-plus');
+                } else {
+                    icon.classList.remove('fa-circle-plus');
+                    icon.classList.add('fa-circle-minus');
+                }
+            }
+
+            if (!visible) {
+                form.querySelector('input').focus();
+            }
+        }
+
+        function toggleOilCategoryInlineForm() {
+            const form = document.getElementById('inlineOilCategoryForm');
+            const icon = document.getElementById('oilCategoryToggleIcon');
+
+            const visible = form.style.display === 'block';
+            form.style.display = visible ? 'none' : 'block';
+
+            if (icon) {
+                icon.classList.toggle('fa-circle-plus', visible);
+                icon.classList.toggle('fa-circle-minus', !visible);
+            }
+
+            if (!visible) {
+                document.getElementById('inlineOilCategoryName').focus();
+            }
+        }
+
+
+        function handleOilPointEnter(event, categoryId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitOilPoint(categoryId);
+            }
+        }
+
+        function submitOilPoint(categoryId) {
+            const form = document.getElementById('oilPointFormFor' + categoryId);
+            const input = form.querySelector('input');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('category_id', categoryId);
+
+            fetch('/add-oil-point', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 检测点添加成功！");
+                        location.reload();  // или можно вставить в DOM
+                    } else {
+                        showToast("❌ 添加失败！");
+                    }
+                });
+        }
+
+        function deleteOilPoint(id) {
+            if (!confirm("确认删除该检测点？")) return;
+
+            fetch(`/delete-oil-point/${id}`, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("✅ 检测点已删除");
+                        location.reload();
+                    } else {
+                        showToast("❌ 删除失败");
+                    }
+                });
+        }
+
+        function editOilPointName(id) {
+            const span = document.querySelector(`.point-name[data-id="${id}"]`);
+            const oldName = span.textContent;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            input.style = 'width: 60%; padding: 2px;';
+            span.replaceWith(input);
+            input.focus();
+
+            function editOilCategoryName(id) {
+                const span = document.querySelector(`.category-name[data-id='${id}']`);
+                const input = document.querySelector(`.category-edit-input[data-id='${id}']`);
+
+                span.style.display = 'none';
+                input.style.display = 'inline-block';
+                input.focus();
+
+                input.addEventListener('keydown', function handler(e) {
+                    if (e.key === 'Enter') {
+                        const newName = input.value.trim();
+                        if (!newName) return;
+
+                        fetch(`/rename-oil-category/${id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newName })
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    span.textContent = newName;
+                                    span.style.display = 'inline-block';
+                                    input.style.display = 'none';
+                                }
+                            });
+
+                        input.removeEventListener('keydown', handler);
+                    }
+
+                    if (e.key === 'Escape') {
+                        input.style.display = 'none';
+                        span.style.display = 'inline-block';
+                        input.removeEventListener('keydown', handler);
+                    }
+                });
+            }
+
+
+
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    const newName = input.value.trim();
+                    if (!newName) return;
+
+                    fetch(`/rename-oil-point/${id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newName })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                const newSpan = document.createElement('span');
+                                newSpan.className = 'point-name';
+                                newSpan.setAttribute('data-id', id);
+                                newSpan.textContent = newName;
+                                input.replaceWith(newSpan);
+                                showToast("✅ 修改成功！");
+                            } else {
+                                showToast("❌ 修改失败！");
+                            }
+                        });
+                }
+            });
+        }
+
+        function editOilCategoryName(id) {
+            const span = document.querySelector(`.category-name[data-id="${id}"]`);
+            const oldName = span.textContent;
+
+            // создаём поле ввода
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = oldName;
+            input.style.width = "120px";
+            input.style.padding = "2px";
+            input.style.border = "1px solid #ccc";
+            input.style.borderRadius = "4px";
+
+            // заменяем span на input
+            span.parentNode.replaceChild(input, span);
+            input.focus();
+
+            input.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    const newName = input.value.trim();
+                    if (!newName) return;
+
+                    fetch(`/rename-oil-category/${id}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ name: newName })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                const newSpan = document.createElement("span");
+                                newSpan.className = "category-name";
+                                newSpan.dataset.id = id;
+                                newSpan.textContent = newName;
+                                input.parentNode.replaceChild(newSpan, input);
+                                showToast("✅ 重命名成功！");
+                            } else {
+                                showToast("❌ 重命名失败！");
+                            }
+                        });
+                }
+                if (e.key === "Escape") {
+                    // Отмена редактирования
+                    input.parentNode.replaceChild(span, input);
+                }
+            });
+        }
+
+</script>
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script>
+    document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const title = item.innerText.trim();
+
+                // Скрываем оба submenu
+                document.getElementById('device-submenu').style.display = 'none';
+                document.getElementById('oil-submenu').style.display = 'none';
+
+                // Показываем нужный
+                if (title.includes('炼油装置管理')) {
+                    document.getElementById('device-submenu').style.display = 'block';
+                } else if (title.includes('油品检测管理')) {
+                    document.getElementById('oil-submenu').style.display = 'block';
+                }
+
+                // Убираем подсвечивание со всех
+                document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            item.addEventListener('click', function () {
+                // Скрываем все блоки с检测点
+                document.querySelectorAll('.detection-points').forEach(block => {
+                    block.style.display = 'none';
+                });
+
+                // Показываем только нужный блок после кликнутого submenu-item
+                const next = this.nextElementSibling;
+                if (next && next.classList.contains('detection-points')) {
+                    next.style.display = 'block';
+                }
+            });
+        });
+    // 初始化事件绑定
+        document.querySelectorAll('.detection-point').forEach(point => {
+            point.addEventListener('click', function () {
+                // 移除所有 .active 类
+                document.querySelectorAll('.detection-point').forEach(p => {
+                    p.classList.remove('active');
+                });
+
+                // 当前点击添加 .active 类
+                this.classList.add('active');
+
+                // 更新右侧标题或主内容区
+                const pointName = this.textContent.trim();
+                document.getElementById('selected-title').textContent = pointName;
+            });
+        });
+</script>
+
+</body>
+
+</html>
